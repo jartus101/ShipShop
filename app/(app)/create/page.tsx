@@ -1,9 +1,5 @@
-import Form from "./form";
+import TikTokCreatePage from "@/components/TikTokCreatePage";
 
 export default function Page() {
-    return (
-        <div className="w-full h-full">
-<Form />
-        </div>
-    )
+    return <TikTokCreatePage />;
 }
