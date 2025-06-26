@@ -9,5 +9,15 @@ export const sanity = createClient({
   dataset,
   apiVersion,
   token,
-  useCdn: true, // Set to false if statically generating pages, using ISR or tag-based revalidation
+  useCdn: true,
+})
+
+// Alternative approach: Use regular client but with specific request options
+export const sanityWrite = createClient({
+  projectId,
+  dataset,
+  apiVersion,
+  token,
+  useCdn: false,
+  // Remove any credential-related settings that might cause CORS issues
 })

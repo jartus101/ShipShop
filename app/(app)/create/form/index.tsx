@@ -41,24 +41,50 @@ export default function Form() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [video, setVideo] = useState<File | null>(null);
+  
   const onSubmit = async (data: FormSchema) => {
+    console.log('Form submitted with data:', data);
+    console.log('Video file:', video);
+    console.log('Is logged in:', isLoggedIn);
+    
     if (!video) return toast({ title: "Upload a video first!" });
     if (!isLoggedIn)
       return toast({ title: "You must be logged in to post a video!" });
+    
     setIsLoading(true);
-    const videoDoc = await createVideo({ ...data, video: video });
-    if (!videoDoc)
-      return toast({ title: "An error occurerd trying to upload the video!" });
+    
+    try {
+      console.log('Calling createVideo...');
+      const videoDoc = await createVideo({ ...data, video: video });
+      console.log('createVideo result:', videoDoc);
+      
+      if (!videoDoc) {
+        console.error('createVideo returned null/undefined');
+        toast({ title: "An error occurred trying to upload the video!" });
+        setIsLoading(false);
+        return;
+      }
 
-    toast({ title: "Video Created Successfully" });
-    router.push(`/video/${videoDoc._id}`);
-    setIsLoading(false);
+      toast({ title: "Video Created Successfully" });
+      console.log('Navigating to video page:', `/video/${videoDoc._id}`);
+      router.push(`/video/${videoDoc._id}`);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error in form submission:', error);
+      toast({ 
+        title: "Upload failed", 
+        description: error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive" 
+      });
+      setIsLoading(false);
+    }
   };
   return (
     <FormComp {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col md:grid md:grid-cols-2 gap-3 w-full max-w-[750px] mx-auto"
+        className="flex flex-col md:grid md:grid-cols-2 gap-3 w-full max-w-[750px] mx-auto text-black"
+        onInvalid={(e) => console.log('Form validation failed:', e)}
       >
         <VideoForm onVideoChange={setVideo} />
         <FormField
@@ -66,7 +92,7 @@ export default function Form() {
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Caption</FormLabel>
+              <FormLabel className="text-black">Caption</FormLabel>
               <FormControl>
                 <Input placeholder="The caption for the video..." {...field} />
               </FormControl>
@@ -79,7 +105,7 @@ export default function Form() {
           control={form.control}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Caption</FormLabel>
+              <FormLabel className="text-black">Hashtag</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
@@ -108,7 +134,7 @@ export default function Form() {
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel className="text-black">Description</FormLabel>
                 <FormControl>
                   <Textarea
                     className="resize-none"
@@ -121,8 +147,12 @@ export default function Form() {
           />
         </div>
         <div className="col-span-2">
-          <Button type="submit" disabled={isLoading}>
-            Submit
+          <Button 
+            type="submit" 
+            disabled={isLoading} 
+            className="w-full"
+          >
+            {isLoading ? "Uploading..." : "Submit"}
           </Button>
         </div>
       </form>

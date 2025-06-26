@@ -1,4 +1,4 @@
-import { sanity } from "@/sanity/lib/client";
+import { sanity, sanityWrite } from "@/sanity/lib/client";
 import { Decoded } from "../auth";
 import { User } from "@/types/user";
 
@@ -10,7 +10,7 @@ export async function createUser(decodedUser: Decoded) {
         email: decodedUser.email,
         picture_url: decodedUser.picture
     }
-    const user = await sanity.createIfNotExists(doc)
+    const user = await sanityWrite.createIfNotExists(doc)
     return user as User
 }
 

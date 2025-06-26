@@ -1,5 +1,5 @@
 "use client";
-import { DetailedVideo } from '@/types/video';
+import { DetailedVideo, DetailedPost } from '@/types/video';
 import { useState } from 'react';
 import VideoList from './VideoList';
 import TikTokVideoFeed from './TikTokVideoFeed';
@@ -9,8 +9,18 @@ type Props = {
   videos: DetailedVideo[];
 };
 
+// Helper function to convert videos to posts format
+function videosToPostsAdapter(videos: DetailedVideo[]): DetailedPost[] {
+  return videos.map(video => ({
+    ...video,
+    media_url: video.video_url,
+    media_type: 'video' as const
+  }));
+}
+
 export default function VideoFeedContainer({ videos }: Props) {
   const [isTikTokMode, setIsTikTokMode] = useState(true);
+  const posts = videosToPostsAdapter(videos);
 
   if (isTikTokMode) {
     return (
@@ -26,7 +36,7 @@ export default function VideoFeedContainer({ videos }: Props) {
         
         {/* Full screen TikTok feed */}
         <div className="fixed inset-0 z-40">
-          <TikTokVideoFeed videos={videos} />
+          <TikTokVideoFeed posts={posts} />
         </div>
       </>
     );

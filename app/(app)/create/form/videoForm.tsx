@@ -34,13 +34,13 @@ export default function VideoForm(props: Props) {
   };
   return (
     <>
-      <FormLabel>Video</FormLabel>
+      <FormLabel className="text-black">Video</FormLabel>
       <div className="col-span-2 relative min-h-[200px] border border-dashed border-secondary hover:border-primary">
         <label className="cursor-pointer">
           <div className="flex flex-col items-center justify-center h-full">
             <div className="flex flex-col items-center justify-center">
-              <p className="text-xl font-semibold">Upload Video</p>
-              <span>
+              <p className="text-xl font-semibold text-black">Upload Video</p>
+              <span className="text-black">
                 <TbVideo />
               </span>
             </div>

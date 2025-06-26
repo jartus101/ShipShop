@@ -9,4 +9,15 @@ export type Video = {
     author: User
 }
 
+export type Post = {
+    _id: string,
+    caption: string, 
+    description: string, 
+    media_url: string,
+    media_type: 'video' | 'image',
+    hashtag: string 
+    author: User
+}
+
 export type DetailedVideo = Video & { likes_count: number, comments_count: number }
+export type DetailedPost = Post & { likes_count: number, comments_count: number }

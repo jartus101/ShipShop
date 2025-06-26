@@ -1,7 +1,7 @@
 "use client";
-import { DetailedVideo } from '@/types/video';
+import { DetailedPost } from '@/types/video';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import VideoPlayer from './VideoPlayer';
+import MediaPlayer from './MediaPlayer';
 import VideoInfo from './VideoInfo';
 import { IoHeart } from "react-icons/io5";
 import { AiFillMessage } from "react-icons/ai";
@@ -16,10 +16,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type Props = {
-  videos: DetailedVideo[];
+  posts: DetailedPost[];
 };
 
-export default function TikTokVideoFeed({ videos }: Props) {
+export default function TikTokVideoFeed({ posts }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const touchStartY = useRef<number>(0);
   const touchEndY = useRef<number>(0);
@@ -47,11 +47,11 @@ export default function TikTokVideoFeed({ videos }: Props) {
   const goToNext = useCallback(() => {
     console.log('goToNext called');
     setCurrentIndex((prevIndex) => {
-      const newIndex = prevIndex < videos.length - 1 ? prevIndex + 1 : prevIndex;
+      const newIndex = prevIndex < posts.length - 1 ? prevIndex + 1 : prevIndex;
       console.log('Setting new index from', prevIndex, 'to', newIndex);
       return newIndex;
     });
-  }, [videos.length]);
+  }, [posts.length]);
 
   const goToPrevious = useCallback(() => {
     console.log('goToPrevious called');
@@ -111,12 +111,96 @@ export default function TikTokVideoFeed({ videos }: Props) {
     touchEndY.current = 0;
   };
 
-  if (videos.length === 0) {
-    return <div className="flex items-center justify-center h-screen text-xl">No videos available</div>;
+  if (posts.length === 0) {
+    return (
+      <div className="relative h-screen overflow-hidden bg-black">
+        {/* Tab switcher at the top */}
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 flex bg-black/70 backdrop-blur-sm rounded-full p-1">
+          <button 
+            className="px-6 py-2 rounded-full bg-white text-black font-medium text-sm transition-colors"
+            disabled
+          >
+            For You
+          </button>
+          <button 
+            onClick={handleCreateClick}
+            className="px-6 py-2 rounded-full text-white font-medium text-sm hover:bg-white/20 transition-colors"
+          >
+            Create
+          </button>
+        </div>
+
+        {/* Login/Profile section - top right corner */}
+        <div className="absolute top-4 right-4 z-10 bg-black/70 backdrop-blur-sm rounded-lg p-3">
+          {isLoggedIn && authedUser ? (
+            <div className="flex items-center gap-3 text-white">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={authedUser.picture_url} />
+                <AvatarFallback className="text-xs">
+                  {authedUser.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{authedUser.name}</span>
+                <button
+                  onClick={logout}
+                  className="text-xs text-red-300 hover:text-red-200 flex items-center gap-1"
+                >
+                  <TbLogout className="text-xs" />
+                  Logout
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-white">
+              <div className="text-sm mb-2 font-medium">Sign in to like and comment</div>
+              <GoogleLogin
+                onSuccess={onLoginSuccess}
+                onError={() => toast({ title: "Login failed", variant: "destructive" })}
+                size="medium"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Empty state content - centered */}
+        <div className="flex flex-col items-center justify-center h-full text-white px-8">
+          <div className="text-center max-w-md">
+            <div className="text-6xl mb-6">📱</div>
+            <h2 className="text-2xl font-bold mb-4">No posts yet</h2>
+            <p className="text-gray-300 mb-8 leading-relaxed">
+              Be the first to share something amazing! 
+              {!isLoggedIn && " Sign in and create your first post to get started."}
+              {isLoggedIn && " Create your first post to get started."}
+            </p>
+            
+            {isLoggedIn ? (
+              <button
+                onClick={handleCreateClick}
+                className="bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-gray-200 transition-colors"
+              >
+                Create your first post
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-sm text-gray-400 mb-4">Sign in to create posts</div>
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={onLoginSuccess}
+                    onError={() => toast({ title: "Login failed", variant: "destructive" })}
+                    size="large"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const currentVideo = videos[currentIndex];
-  console.log('TikTokVideoFeed render - currentIndex:', currentIndex, 'currentVideo:', currentVideo._id);
+  const currentPost = posts[currentIndex];
+  console.log('TikTokVideoFeed render - currentIndex:', currentIndex, 'currentPost:', currentPost._id);
 
   return (
     <div 
@@ -144,12 +228,12 @@ export default function TikTokVideoFeed({ videos }: Props) {
       {/* Full-screen video player */}
       <div className="w-full h-full flex items-center justify-center relative bg-black">
         <div className="relative w-full max-w-md h-full flex items-center justify-center">
-          <VideoPlayer key={currentVideo._id} video={currentVideo} isTikTokStyle={true} />
+          <MediaPlayer key={currentPost._id} post={currentPost} isTikTokStyle={true} />
         </div>
         
         {/* Video info overlay - bottom left */}
         <div className="absolute bottom-20 left-4 right-4 md:right-auto md:max-w-md">
-          <VideoInfo key={currentVideo._id} video={currentVideo} isTikTokStyle={true} />
+          <VideoInfo key={currentPost._id} post={currentPost} isTikTokStyle={true} />
         </div>
         
         {/* Action buttons overlay - right side directly next to video */}
@@ -158,18 +242,18 @@ export default function TikTokVideoFeed({ videos }: Props) {
             <div className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors cursor-pointer">
               <IoHeart className="text-2xl text-white" />
             </div>
-            <span className="text-white text-xs font-medium">{currentVideo.likes_count}</span>
+            <span className="text-white text-xs font-medium">{currentPost.likes_count}</span>
           </div>
 
           <div className="flex flex-col items-center space-y-1">
             <div className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors cursor-pointer">
               <AiFillMessage className="text-2xl text-white" />
             </div>
-            <span className="text-white text-xs font-medium">{currentVideo.comments_count}</span>
+            <span className="text-white text-xs font-medium">{currentPost.comments_count}</span>
           </div>
 
           <Link 
-            href={`/video/${currentVideo._id}`}
+            href={`/video/${currentPost._id}`}
             className="p-3 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
           >
             <IoIosArrowForward className="text-2xl text-white" />
@@ -195,15 +279,15 @@ export default function TikTokVideoFeed({ videos }: Props) {
 
         {/* Video counter */}
         <div className="bg-black/50 rounded-full px-3 py-1 text-white text-sm font-medium">
-          {currentIndex + 1} / {videos.length}
+          {currentIndex + 1} / {posts.length}
         </div>
 
         {/* Down arrow */}
         <button
           onClick={goToNext}
-          disabled={currentIndex === videos.length - 1}
+          disabled={currentIndex === posts.length - 1}
           className={`p-3 rounded-full transition-all ${
-            currentIndex === videos.length - 1 
+            currentIndex === posts.length - 1 
               ? 'bg-black/20 text-white/50 cursor-not-allowed' 
               : 'bg-black/50 hover:bg-black/70 text-white cursor-pointer'
           }`}

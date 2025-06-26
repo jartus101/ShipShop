@@ -1,5 +1,5 @@
 import { FormSchema } from "@/app/(app)/create/form/schema";
-import { sanity } from "@/sanity/lib/client";
+import { sanity, sanityWrite } from "@/sanity/lib/client";
 import { getAuthedUserId } from "../auth";
 import { DetailedVideo, Video } from "@/types/video";
 
@@ -7,21 +7,40 @@ type Data = {
   video: File;
 } & FormSchema;
 export async function createVideo(data: Data) {
-  const videoAsset = await sanity.assets.upload("file", data.video);
-  const videoUrl = videoAsset.url;
-  const userId = await getAuthedUserId();
-
-  if (!userId || !videoUrl) return;
-  const doc = {
-    _type: "video",
-    caption: data.caption,
-    description: data.description,
-    hashtag: data.hashtag,
-    video_url: videoUrl,
-    author: { _ref: userId } as unknown,
-  };
-  const video = await sanity.create(doc);
-  return video as Video;
+  try {
+    console.log('Starting video upload...', data.video.name);
+    
+    const userId = await getAuthedUserId();
+    if (!userId) {
+      throw new Error('User not authenticated');
+    }
+    
+    // Send everything to server-side API to avoid all CORS issues
+    const formData = new FormData();
+    formData.append('file', data.video);
+    formData.append('caption', data.caption);
+    formData.append('description', data.description || '');
+    formData.append('hashtag', data.hashtag);
+    formData.append('userId', userId);
+    
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Upload failed: ${errorData.error}`);
+    }
+    
+    const result = await response.json();
+    console.log('Video created successfully:', result);
+    
+    return result.video as Video;
+  } catch (error) {
+    console.error('Error creating video:', error);
+    throw error;
+  }
 }
 
 
