@@ -27,8 +27,23 @@ export const videoType = defineType({
             type: "string"
         }),
         defineField({
+            title: "Subcategory",
+            name: "subcategory",
+            type: "string"
+        }),
+        defineField({
             title: "Video URL",
             name: "video_url",
+            type: "url"
+        }),
+        defineField({
+            title: "Price",
+            name: "price",
+            type: "number"
+        }),
+        defineField({
+            title: "Buy Link",
+            name: "buyLink",
             type: "url"
         }),
     ]

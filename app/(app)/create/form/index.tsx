@@ -12,7 +12,7 @@ import {
 import { useForm } from "react-hook-form";
 import { formSchema, FormSchema } from "./schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { hashtags } from "@/constants/hashtags";
+import { hashtags, getSubcategoriesForHashtag, formatSubcategory } from "@/constants/hashtags";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -40,22 +40,31 @@ export default function Form() {
   const isLoggedIn = useAuth((state) => state.isLoggedIn);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [video, setVideo] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  
+  // Watch hashtag to update subcategory options
+  const selectedHashtag = form.watch("hashtag");
+  const subcategories = getSubcategoriesForHashtag(selectedHashtag);
+  
+  // Reset subcategory when hashtag changes
+  React.useEffect(() => {
+    form.setValue("subcategory", "");
+  }, [selectedHashtag, form]);
   
   const onSubmit = async (data: FormSchema) => {
     console.log('Form submitted with data:', data);
-    console.log('Video file:', video);
+    console.log('Media file:', mediaFile);
     console.log('Is logged in:', isLoggedIn);
     
-    if (!video) return toast({ title: "Upload a video first!" });
+    if (!mediaFile) return toast({ title: "Upload a video or photo first!" });
     if (!isLoggedIn)
-      return toast({ title: "You must be logged in to post a video!" });
+      return toast({ title: "You must be logged in to post!" });
     
     setIsLoading(true);
     
     try {
       console.log('Calling createVideo...');
-      const videoDoc = await createVideo({ ...data, video: video });
+      const videoDoc = await createVideo({ ...data, video: mediaFile });
       console.log('createVideo result:', videoDoc);
       
       if (!videoDoc) {
@@ -65,7 +74,7 @@ export default function Form() {
         return;
       }
 
-      toast({ title: "Video Created Successfully" });
+      toast({ title: "Post Created Successfully" });
       console.log('Navigating to video page:', `/video/${videoDoc._id}`);
       router.push(`/video/${videoDoc._id}`);
       setIsLoading(false);
@@ -86,7 +95,7 @@ export default function Form() {
         className="flex flex-col md:grid md:grid-cols-2 gap-3 w-full max-w-[750px] mx-auto text-black"
         onInvalid={(e) => console.log('Form validation failed:', e)}
       >
-        <VideoForm onVideoChange={setVideo} />
+        <VideoForm onVideoChange={setMediaFile} />
         <FormField
           name="caption"
           control={form.control}
@@ -124,6 +133,66 @@ export default function Form() {
                   ))}
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="subcategory"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">Subcategory</FormLabel>
+              <Select onValueChange={field.onChange} value={field.value || ""}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a subcategory..." />
+                  </SelectTrigger>
+                </FormControl>
+
+                <SelectContent>
+                  {subcategories.map((subcategory) => (
+                    <SelectItem key={subcategory} value={subcategory}>
+                      {formatSubcategory(subcategory)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="price"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">Price (optional)</FormLabel>
+              <FormControl>
+                <Input 
+                  type="number" 
+                  placeholder="29.99" 
+                  {...field}
+                  onChange={(e) => field.onChange(e.target.value ? parseFloat(e.target.value) : undefined)}
+                  value={field.value || ''}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          name="buyLink"
+          control={form.control}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-black">Buy Link (optional)</FormLabel>
+              <FormControl>
+                <Input 
+                  placeholder="https://example.com/product" 
+                  {...field}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}

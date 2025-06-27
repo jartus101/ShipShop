@@ -11,11 +11,17 @@ type Props = {
 
 // Helper function to convert videos to posts format
 function videosToPostsAdapter(videos: DetailedVideo[]): DetailedPost[] {
-  return videos.map(video => ({
-    ...video,
-    media_url: video.video_url,
-    media_type: 'video' as const
-  }));
+  return videos.map(video => {
+    // Determine media type based on URL extension
+    const url = video.video_url || '';
+    const isImage = /\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/i.test(url);
+    
+    return {
+      ...video,
+      media_url: video.video_url,
+      media_type: isImage ? 'image' as const : 'video' as const
+    };
+  });
 }
 
 export default function VideoFeedContainer({ videos }: Props) {

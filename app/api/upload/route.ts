@@ -43,14 +43,20 @@ export async function POST(request: NextRequest) {
     const caption = formData.get('caption') as string
     const description = formData.get('description') as string
     const hashtag = formData.get('hashtag') as string
+    const subcategory = formData.get('subcategory') as string
     const userId = formData.get('userId') as string
+    const price = formData.get('price') as string
+    const buyLink = formData.get('buyLink') as string
     
     console.log('Server: Form data received:', {
       hasFile: !!file,
       caption,
       description,
       hashtag,
+      subcategory,
       userId,
+      price,
+      buyLink,
       fileInfo: file ? { name: file.name, type: file.type, size: file.size } : null
     })
     
@@ -76,7 +82,7 @@ export async function POST(request: NextRequest) {
     console.log('Server: Upload successful', asset.url)
 
     // Create video document
-    const doc = {
+    const doc: any = {
       _type: "video",
       caption,
       description: description || '',
@@ -84,6 +90,19 @@ export async function POST(request: NextRequest) {
       video_url: asset.url,
       author: { _ref: userId, _type: "reference" },
     };
+
+    // Add optional subcategory if provided
+    if (subcategory && subcategory.trim()) {
+      doc.subcategory = subcategory.trim();
+    }
+
+    // Add optional shopping fields if provided
+    if (price && !isNaN(parseFloat(price))) {
+      doc.price = parseFloat(price);
+    }
+    if (buyLink && buyLink.trim()) {
+      doc.buyLink = buyLink.trim();
+    }
 
     console.log('Server: Creating video document', doc)
     const video = await sanityClient.create(doc)

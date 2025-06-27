@@ -5,7 +5,10 @@ export type Video = {
     caption: string, 
     description: string, 
     video_url: string,
-    hashtag: string 
+    hashtag: string,
+    subcategory?: string,
+    price?: number,
+    buyLink?: string,
     author: User
 }
 
@@ -15,7 +18,10 @@ export type Post = {
     description: string, 
     media_url: string,
     media_type: 'video' | 'image',
-    hashtag: string 
+    hashtag: string,
+    subcategory?: string,
+    price?: number,
+    buyLink?: string,
     author: User
 }
 

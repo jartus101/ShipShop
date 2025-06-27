@@ -23,6 +23,19 @@ export async function createVideo(data: Data) {
     formData.append('hashtag', data.hashtag);
     formData.append('userId', userId);
     
+    // Add optional subcategory
+    if (data.subcategory) {
+      formData.append('subcategory', data.subcategory);
+    }
+    
+    // Add optional shopping fields
+    if (data.price !== undefined) {
+      formData.append('price', data.price.toString());
+    }
+    if (data.buyLink) {
+      formData.append('buyLink', data.buyLink);
+    }
+    
     const response = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
@@ -93,6 +106,48 @@ export async function getHashtagVideos(hashtag: string) {
 }
 
 export async function searchVideos(value: string) {
-  const videos = await getVideos()
-  return videos.filter(video => video.caption.toLowerCase().includes(value) || video.description.toLowerCase().includes(value))
+  try {
+    // Use simple client-side filtering to avoid Sanity query issues
+    const videos = await getVideos();
+    
+    if (!videos || !Array.isArray(videos)) {
+      console.error('getVideos returned invalid data:', videos);
+      return [];
+    }
+    
+    const filtered = videos.filter(video => {
+      if (!video) return false;
+      
+      const caption = video.caption || '';
+      const description = video.description || '';
+      
+      return caption.toLowerCase().includes(value.toLowerCase()) || 
+             description.toLowerCase().includes(value.toLowerCase());
+    });
+    
+    return filtered;
+  } catch (error) {
+    console.error('Error in searchVideos:', error);
+    // Always return an empty array instead of throwing
+    return [];
+  }
+}
+
+export async function getLikedVideos() {
+  try {
+    console.log('Fetching liked videos via API...');
+    const response = await fetch('/api/liked-videos');
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+    
+    const videos = await response.json();
+    console.log('Fetched liked videos successfully:', videos.length);
+    return videos as DetailedVideo[];
+  } catch (error) {
+    console.error('Error fetching liked videos:', error);
+    throw error;
+  }
 }
